@@ -46,7 +46,6 @@ const API_KEY = "AIzaSyCfsM1XGSnNqZawYhX8sR670-Q9kLArQZk";
 // ----------------------------------------------------------------------------
 
 // URL DO SCRIPT GOOGLE (Backend)
-// Certifique-se que o script Google aceita o parâmetro 'folderName' no payload JSON.
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxG8Y9NQz7mVRnqvFWEb394a5B-uIGLifQRcUOdbP-nWZ269WEJ5WWKWUFlvdwTa3Dr/exec';
 
 const ai = new GoogleGenAI({ apiKey: API_KEY });
@@ -909,7 +908,10 @@ const App: React.FC = () => {
             </button>
           </div>
         </form>
-        <footer className="text-center mt-8 mb-4 text-brand-gray text-xs no-print"><p>© {new Date().getFullYear()} Sistema de Inspeção. Todos os direitos reservados.</p></footer>
+        <footer className="text-center mt-8 mb-4 text-brand-gray text-xs no-print">
+          <p>© {new Date().getFullYear()} Sistema de Inspeção. Todos os direitos reservados.</p>
+          <p className="mt-1 font-medium">Desenvolvido por Welson</p>
+        </footer>
       </main>
 
       <div ref={printRef} style={{ display: 'none', width: '210mm', backgroundColor: 'white', margin: '0 auto', padding: '20mm', color: 'black' }}>
