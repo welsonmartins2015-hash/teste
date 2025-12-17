@@ -1,0 +1,9 @@
+{
+  "name": "Copy of Inspeção de Campo",
+  "description": "Aplicativo para registro de inspeções de campo com transcrição de áudio e fluxo de resolução.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera",
+    "geolocation"
+  ]
+}
