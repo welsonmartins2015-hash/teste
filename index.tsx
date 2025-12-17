@@ -65,10 +65,11 @@ declare global {
 
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxG8Y9NQz7mVRnqvFWEb394a5B-uIGLifQRcUOdbP-nWZ269WEJ5WWKWUFlvdwTa3Dr/exec';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 const transcribeAudio = async (base64Audio: string, mimeType: string): Promise<string> => {
   try {
+    // Initialize AI client lazily to prevent startup crashes if environment is not ready
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: {
