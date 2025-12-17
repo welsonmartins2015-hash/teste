@@ -65,11 +65,10 @@ declare global {
 
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxG8Y9NQz7mVRnqvFWEb394a5B-uIGLifQRcUOdbP-nWZ269WEJ5WWKWUFlvdwTa3Dr/exec';
 
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
 const transcribeAudio = async (base64Audio: string, mimeType: string): Promise<string> => {
   try {
-    // Initialize AI client lazily to prevent startup crashes if environment is not ready
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: {
@@ -133,15 +132,56 @@ const processMediaFile = (file: File): Promise<string> => {
 // --- Component: PDFMediaAttachment ---
 const PDFMediaAttachment: React.FC<{ file: File | null; label: string }> = ({ file, label }) => {
   const [src, setSrc] = React.useState<string | null>(null);
+
   React.useEffect(() => {
     if (file) {
-      const url = URL.createObjectURL(file);
-      setSrc(url);
-      return () => URL.revokeObjectURL(url);
+      if (file.type.startsWith('video/')) {
+         setSrc('video');
+         return;
+      }
+      
+      // Resize image and convert to DataURL for reliable PDF generation
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const MAX_WIDTH = 800; 
+          const MAX_HEIGHT = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          if (ctx) {
+             ctx.drawImage(img, 0, 0, width, height);
+             setSrc(canvas.toDataURL('image/jpeg', 0.8));
+          }
+        };
+        img.src = event.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setSrc(null);
     }
   }, [file]);
+
   if (!file || !src) return null;
   const isVideo = file.type.startsWith('video/');
+
   return (
     <div className="mt-6 break-inside-avoid">
       <div className="bg-white p-2 rounded-xl border border-gray-200 shadow-sm inline-block w-full">
@@ -155,7 +195,8 @@ const PDFMediaAttachment: React.FC<{ file: File | null; label: string }> = ({ fi
                  <p className="text-xs text-gray-500 font-medium">Vídeo anexado (Ver no Drive)</p>
               </div>
            ) : (
-              <img src={src} alt={label} className="w-full h-auto max-h-[350px] object-contain" />
+              // Use plain img tag with max-width/height logic compatible with html2pdf
+              <img src={src} alt={label} style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain' }} />
            )}
          </div>
       </div>
@@ -789,6 +830,10 @@ const OACForm = ({ onBack, onSubmitSuccess }: { onBack: () => void, onSubmitSucc
   const generatePDF = async (): Promise<string> => {
     if (!printRef.current) return '';
     printRef.current.style.display = 'block';
+    
+    // Add small delay to ensure images are rendered before capture
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     const opt = {
       margin: 0, filename: `OAC_${formData.observerName}.pdf`, image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 1.5, useCORS: true, scrollY: 0 },
@@ -1147,6 +1192,10 @@ const App: React.FC = () => {
   const generatePDF = async (): Promise<string> => {
     if (!printRef.current) return '';
     printRef.current.style.display = 'block';
+
+    // Add small delay to ensure images are rendered before capture
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     const opt = {
       margin: 0, filename: `inspecao.pdf`, image: { type: 'jpeg', quality: 0.95 },
       html2canvas: { scale: 1.2, useCORS: true, logging: false, scrollY: 0, windowWidth: 800 },
